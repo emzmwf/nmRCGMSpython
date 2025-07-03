@@ -168,7 +168,7 @@ def FFT_Array_Analysis(imo,FFTsize,spacing,maskP=10,maskC_width=0,show_cube=Fals
 		dc_im.SetDimensionCalibration(1,-1/(2*(x_scale*binning)),1/(x_scale*binning)/FFTsize,scale_unit+"-1",0)
 		dc_im.SetDimensionCalibration(2,0,(x_scale*binning)*spacing,scale_unit,0)
 		dc_im.SetDimensionCalibration(3,0,(x_scale*binning)*spacing,scale_unit,0)
-		dc_im.SetName("4D_STEM Diffractogram of "+name)
+		dc_im.SetName("4D_FFT Array of "+name)
 		dc_im.GetTagGroup().SetTagAsBoolean('Meta Data:Data Order Swapped', True)
 		dc_im.GetTagGroup().SetTagAsString('Meta Data:Format', 'Diffraction image')
 		dc_im.GetTagGroup().SetTagAsString('Meta Data:Acquisition Mode', 'FFTs of TEM Image')
