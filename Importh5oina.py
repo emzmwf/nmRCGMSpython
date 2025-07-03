@@ -8,7 +8,6 @@ import math
 
 #Note the slash direction for network drive, will only work this way!
 #example
-#file_name = '//nmrc-nas.nottingham.ac.uk/data/Instrument Data/FEGTEM/MW Fay/2024/20240717 Salvatore Lagana/B2 272192 J8_A741 EDS/h5oina/B2 272192 B2 272192 Site 2 Map Data 2.h5oina'
 
 #DM import file
 dmScript = 'string path = GetApplicationDirectory( "open_save" , 0 )' + '\n'
@@ -90,21 +89,12 @@ def ShowEImage():
     img_disp.AddNewComponent(31, SX*0.8, SX*0.1, SX*0.9, SX*0.9 )# scale bar from top, left, 
     #Get the image tags
     imgTG = img.GetTagGroup()
-    #print(f['1/Electron Image/Header/Analysis Label'][0].decode('ASCII'))
-    #print(f['1/Electron Image/Header/Analysis Unique Identifier'][0].decode('ASCII'))
-    #print(f['1/Electron Image/Header/Dwell Time'][0])
-    #print(f['1/Electron Image/Header/Project File'][0].decode('ASCII'))
-    #print(f['1/Electron Image/Header/Site Label'][0].decode('ASCII'))
-    #print(f['1/Electron Image/Header/Stage Position/X'][0])
-    #print(f['1/Electron Image/Header/Stage Position/X'][0])
     imgTG.SetTagAsString( 'Analysis Label',str(f['1/Electron Image/Header/Analysis Label'][0].decode('ASCII') ))
     imgTG.SetTagAsString( 'Project File',str(f['1/Electron Image/Header/Project File'][0].decode('ASCII') ))
     imgTG.SetTagAsString( 'Specimen Label',str(f['1/Electron Image/Header/Specimen Label'][0].decode('ASCII') ))
     imgTG.SetTagAsString( 'Site Label',str(f['1/Electron Image/Header/Site Label'][0].decode('ASCII') ))
     imgTG.SetTagAsString( 'Dwell Time', str(f['1/Electron Image/Header/Dwell Time'][0]))
-    #imgTG.SetTagAsFloat( 'Stage Position X',  float((f['1/Electron Image/Header/Stage Position/X'][0])))
-    #imgTG.SetTagAsFloat( 'Stage Position Y',  float((f['1/Electron Image/Header/Stage Position/Y'][0])))
-    
+
 
 ShowEImage()
 ###
@@ -206,25 +196,3 @@ dmWS_Arr_script = 'WorkspaceArrange( 1, 1 )' + '\n'
 DM.ExecuteScriptString( dmWS_Arr_script )
 
 
-# 1/Layered Image/EDS Layered Image 3/Data/Color
-# coloured image, GMS python not yet handling colour images? 
-# so would have to create as R G and B and then DMscript to combine
-#CImage = f['1/Layered Image/EDS Layered Image 3/Data/Color']
-#arr_C = CImage[()] 
-
-#print("\n bounding box size ")
-#print(f['1/EDS/Header/Bounding Box Size'])
-#print(f['1/EDS/Header/Bounding Box Size'][0])
-#print(f['1/EDS/Header/Bounding Box Size'][1])
-
-#print("\n \n electron image bounding box size ")
-#print(f['1/Electron Image/Header/Bounding Box Size'][0])
-#print(f['1/Electron Image/Header/Bounding Box Size'][1])
-
-#print(f['1/Electron Image/Header/Analysis Label'][0].decode('ASCII'))
-#print(f['1/Electron Image/Header/Analysis Unique Identifier'][0].decode('ASCII'))
-#print(f['1/Electron Image/Header/Dwell Time'][0])
-#print(f['1/Electron Image/Header/Project File'][0].decode('ASCII'))
-#print(f['1/Electron Image/Header/Site Label'][0].decode('ASCII'))
-#print(f['1/Electron Image/Header/Stage Position/X'][0])
-#print(f['1/Electron Image/Header/Stage Position/Y'][0])
