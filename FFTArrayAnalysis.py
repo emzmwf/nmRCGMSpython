@@ -19,11 +19,11 @@ cVal, spacing = DM.GetNumber( 'spacing', 16 )
 FFTsize = int(FFTsize)
 spacing = int(spacing)
 #Set Percentage of Radial Profile (from center) to be Ignored (Default 10)
-maskP = 1
+dVal, maskP = DM.GetNumber( 'mask percentage', 5 ) 
 #Set the minimum distance between spots (to generate masked 4D dataset)
 min_spot_dist = 5
 #Set to number to also mask the center vertical and horizontal lines in the FFT, set to 0 to not mask (Default 2)
-maskC_width = 1
+eVal, maskC_width = DM.GetNumber( 'vertical and horizontal mask width', 0 )
 #Set memory usage level (GB) above which the code will ask user if they want to continue. (Default 6)
 mem_warn_limit = 6
 #Set whether to pad the result border so that the result image has the exact same shape as the input data (Default True)
@@ -109,7 +109,7 @@ def mask_FFT_center(array,mask_percent,mask_cross_width):
 
 
 
-def FFT_Array_Analysis(imo,FFTsize,spacing,maskP=10,maskC_width=0,show_cube=False, data=None, smooth=True):
+def FFT_Array_Analysis(imo,FFTsize,spacing,maskP,maskC_width,show_cube=False, data=None, smooth=True):
 	"""
 	Function (similar to STEMx_Array_Analysis) to process a 2D image by first splitting into many patches and computing FFTs,
 		transforming it into a 4D data cube resembling a 4D STEM dataset
@@ -205,7 +205,7 @@ def FFT_Array_Analysis(imo,FFTsize,spacing,maskP=10,maskC_width=0,show_cube=Fals
 def DoStuff():
     dmImg = DM.GetFrontImage() # Get reference to front most image
     
-    r_max,t_max,i_max,diff_max = FFT_Array_Analysis(dmImg,FFTsize,spacing,maskP=10,maskC_width=0,show_cube=True, data=None, smooth=True)
+    r_max,t_max,i_max,diff_max = FFT_Array_Analysis(dmImg,FFTsize,spacing,maskP,maskC_width,show_cube=True, data=None, smooth=True)
     DM_RM = DM.CreateImage(r_max.copy())
     DM_RM.SetName("R max")
     DM_RM.ShowImage()
