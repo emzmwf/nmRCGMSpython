@@ -1,5 +1,6 @@
 # 0.1.1 2025 06 03 - Imports maps and electron image into GMS
 # 0.1.2 2025 06 05 - add calibrations to images and maps
+# 0.1.3 2025 06 05 - add colour display option
 
 
 import h5py
@@ -158,12 +159,16 @@ if bVal == True:
 #So from the keys, we can parse over the maps
 #Set up a def to do this
 def parse_map(name, i):
-    print(name)
+    print("\n plotting "+name)
     Map = (f['1/EDS/Data/Window Integral/'+name]) 
     SZ = Map.shape[0]
+    #print(SZ)
     SY = (f['1/EDS/Header/X Cells'][0])
     SX = (f['1/EDS/Header/Y Cells'][0])
     arr = Map[()] 
+    if ( arr.shape[0] != SY*SX):
+        print("\n"+str(arr.shape[0])+"\t"+str(SZ)+"\t"+name)
+    #print (arr.shape)
     arr_2d = arr.reshape(SX, SY)
     img = DM.CreateImage(arr_2d.copy())
     img.SetName(name)
