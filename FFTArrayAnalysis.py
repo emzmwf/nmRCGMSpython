@@ -6,16 +6,16 @@ from numpy.lib.stride_tricks import as_strided
 import scipy
 
 ## Turn HRTEM image into FFT 4D Stack
-## Functions from Ben Miller
+## Using functions from Ben Miller (Gatan)
 
 ## TO DO - option for reduced area FFT instead? all useful data may be in centre of FFT
 
 #User-Set Parameters XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-#Set FFT Size and Spacing (Default 128,32)
+#Set FFT Size and Spacing (Default 128,32) Smaller spacing will rapidly increase processing time and file size
 FFTsize = 128
-spacing = 16
+spacing = 32
 bVal, FFTsize = DM.GetNumber( 'FFTsize', 128 ) 
-cVal, spacing = DM.GetNumber( 'spacing', 16 ) 
+cVal, spacing = DM.GetNumber( 'spacing', 32 ) 
 FFTsize = int(FFTsize)
 spacing = int(spacing)
 #Set Percentage of Radial Profile (from center) to be Ignored (Default 10)
@@ -219,6 +219,6 @@ def DoStuff():
     DM_DiffM.SetName("Diff Max")
     DM_DiffM.ShowImage()
 
-print("\n \n \n HRTEM to FFT 4D array \n ")
+print("\n \n \n HRTEM to FFT array \n ")
 
 DoStuff()
