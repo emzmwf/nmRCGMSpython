@@ -6,7 +6,7 @@ sys.argv.extend(['-a', ' '])
 
 import matplotlib.pyplot as plt
 
-# test on an EELS spectrum
+# Get from image assuming EELS spectrum selected
 
 image_0 = DM.GetFrontImage()
 im_name = image_0.GetName()
@@ -29,14 +29,7 @@ print("\n t length is "+str(tl))
 xdata = np.copy(numpy_array)
 ydata = np.copy(numpy_array)
 
-#print(ydata[0][0])
-#print(ydata[0][1])
-#print(ydata[0][2])
-
 #fill the xdata array
-#for i in range(0, tl)
-#i = 2048
-#print(ydata[0][i])
 
 #for i in ydata:
 for i in range(0, tl):
@@ -51,11 +44,8 @@ print(xdata)
 print("\n ydata")
 print(ydata)
 
-#calibrate x data
-#xscaled = (xdata*scaleX)-100-originX
 xscaled = xdata
 
-#plt.plot(xdata,ydata)
 plt.plot(xscaled[0],ydata[0]) 
 
 plt.xlabel(unitX)
@@ -64,19 +54,12 @@ plt.ylabel(i_unit)
 #Style list
 #['default', 'classic', 'Solarize_Light2', '_classic_test_patch', 'bmh', 'dark_background', 'fast', 'fivethirtyeight', 'ggplot', 'grayscale', 'seaborn', 'seaborn-bright', 'seaborn-colorblind', 'seaborn-dark', 'seaborn-dark-palette', 'seaborn-darkgrid', 'seaborn-deep', 'seaborn-muted', 'seaborn-notebook', 'seaborn-paper', 'seaborn-pastel', 'seaborn-poster', 'seaborn-talk', 'seaborn-ticks', 'seaborn-white', 'seaborn-whitegrid', 'tableau-colorblind10']
 
-#plt.style.use('default')
-#plt.style.use('seaborn-bright')
-#plt.style.use('seaborn-dark-palette')
 plt.style.use('seaborn-colorblind')
 
-#plt.style.use('seaborn-darkgrid')
 
-#DM.ClearResults()
 print('Start plotting. Script continues when figure is closed')
 plt.show()
 print("Figure will appear in separate window as matplot format")
-
-#print(locals())
 
 # clean up memory
 del(numpy_array)
