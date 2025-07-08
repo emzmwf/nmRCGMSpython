@@ -2,11 +2,12 @@ import DigitalMicrograph as DM
 import numpy as np
 import sys
 import time
-from numpy.lib.stride_tricks import as_strided
+from numpy.lib.stride_tricks import as_strided # From BenMillerScripts
 import scipy
 
 ## Turn HRTEM image into FFT 4D Stack
 ## Using functions from Ben Miller (Gatan)
+## Additional requirements - Scipy, BenMillerScripts
 
 ## TO DO - option for reduced area FFT instead? all useful data may be in centre of FFT
 
