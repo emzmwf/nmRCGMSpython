@@ -1,7 +1,9 @@
+
 # 0.1.1 2025 06 03 - Imports maps and electron image into GMS
 # 0.1.2 2025 06 05 - add calibrations to images and maps
 # 0.1.3 2025 06 05 - add colour display option
 # 0.1.4 2025 07 08 - Check for image called SE or BSE, add catches for error, rename workspace based on site name
+# 0.1.5 2025 07 17 - add layered image display as RGB image
 
 
 
@@ -46,6 +48,7 @@ def ShowEImage(f):
     SY = (f['1/Electron Image/Header/Y Cells'][0])
 
     IBB = (f['1/Electron Image/Header/Bounding Box Size'])
+    print("Electron image Bounding box size")
     print(IBB[0])
     print(IBB[1])
 
@@ -163,6 +166,41 @@ def ShowMaps(f):
         parse_map(name, i, f, EDSpx, bVal, VerifiedMaps, nmRC_ColMaps)
         i = i+1
 
+# Layered Image
+def ShowLayered(f):
+    #1/Layered Image/EDS Layered Image 1/Data/Color
+    #3 column matrix R G B
+    if "1/Layered Image/EDS Layered Image 1/Data/Color" in f:
+        print("Layered EDS image found")
+        lcheck = 1
+        LImage = f['1/Layered Image/EDS Layered Image 1/Data/Color']
+        arr_1 = LImage[()]
+        SX = (f['1/Layered Image/EDS Layered Image 1/Header/X Cells'][0])
+        SY = (f['1/Layered Image/EDS Layered Image 1/Header/Y Cells'][0])
+        #Get and shape array for each colour
+        arr_r = arr_1[:,0].reshape(SX, SX)
+        arr_g = arr_1[:,1].reshape(SX, SX)
+        arr_b = arr_1[:,2].reshape(SX, SX)
+        
+        # Create DM images for each color
+        r_ = DM.CreateImage(arr_r.copy())
+        g_ = DM.CreateImage(arr_g.copy())
+        b_ = DM.CreateImage(arr_b.copy())
+        # Build one-liner DM-script to show RGB image 
+        dms = 'rgb(' + r_.GetLabel() + ',' + g_.GetLabel() + ',' + b_.GetLabel() + ').ShowImage()'
+        DM.ExecuteScriptString(dms)
+        #Retitle layered image
+        imageL = DM.GetFrontImage()
+        imageL.SetName('Layered image') 
+        # Get EDS pixel size in nm
+        
+        EDSpx = (f['1/Layered Image/EDS Layered Image 1/Header/X Step'][0])*1000
+        imageL.SetDimensionCalibration(0, 0, EDSpx, 'nm', 0)     
+        imageL.SetDimensionCalibration(1, 0, EDSpx, 'nm', 0)
+        
+    else:
+        print("Layered image not found in expected place")
+
 # Script main body
 
 def ProcessH5oina():
@@ -201,7 +239,7 @@ def ProcessH5oina():
     dmWScript += 'WorkspaceSetName( wsID_montage , "' + SiteName+'" )' + '\n'
     # Execute DM script
     DM.ExecuteScriptString( dmWScript )
-
+    
 
 
     try:
@@ -213,7 +251,12 @@ def ProcessH5oina():
         ShowMaps(f)
     except:
         DM.OkDialog( 'Maps not found' ) 
-
+        
+    #try:
+        #ShowLayered(f)
+    #except:
+        #DM.OkDialog( 'Layered image not found' ) 
+    ShowLayered(f)
     # Now tidy up the current workspace - am assuming we've been swapped to the EDX map workspace by here
     dmWS_Arr_script = 'WorkspaceArrange( 1, 1 )' + '\n'
     # Execute DM script
