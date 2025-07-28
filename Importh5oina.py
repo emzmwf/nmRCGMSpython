@@ -4,7 +4,48 @@
 # 0.1.3 2025 06 05 - add colour display option
 # 0.1.4 2025 07 08 - Check for image called SE or BSE, add catches for error, rename workspace based on site name
 # 0.1.5 2025 07 17 - add layered image display as RGB image
+# 0.1.6 2025 07 28 - add on the fly generation of a CLUT if we have run out of the defined list
 
+import numpy as np
+
+def GMSHybridCLUT(img, hue):
+    import colorsys
+    img_disp = img.GetImageDisplay(0)
+    inputColorTable = img_disp.GetInputColorTable()
+    
+    #Modify CLUT
+    # DM Python does not support RGB image creation yet
+    # So would need hybrid script
+    #Get size of img
+    #Set up three arrays of same size
+    
+    dimx = inputColorTable.GetDimensionSize(0) 
+    dimy = inputColorTable.GetDimensionSize(1) 
+    
+    dsize = dimx*dimy
+    
+    matrix = np.arange(dsize).reshape(dimx, -1)
+    
+    rgb = colorsys.hsv_to_rgb(hue, 1, 1)
+    
+    arr_r = np.round(rgb[0]*matrix.copy())
+    arr_g = np.round(rgb[1]*matrix.copy())
+    arr_b = np.round(rgb[2]*matrix.copy())
+    
+    r_ = DM.CreateImage(arr_r.copy())
+    g_ = DM.CreateImage(arr_g.copy())
+    b_ = DM.CreateImage(arr_b.copy())
+    
+    dms = 'rgb(' + r_.GetLabel() + ',' + g_.GetLabel() + ',' + b_.GetLabel() + ').ShowImage()'
+    DM.ExecuteScriptString(dms)
+    imgCLUT = DM.GetFrontImage()
+        
+    img_disp.SetInputColorTable(imgCLUT)
+    #Get image document of imgCLUT
+    docCLUT = imgCLUT.GetOrCreateImageDocument()
+    docCLUT.Hide()
+    del imgCLUT
+    print("Hue is "+str(hue))  
 
 
 def ShowEImage(f):
@@ -104,11 +145,17 @@ def parse_map(name, i, f, EDSpx, bVal, VerifiedMaps, nmRC_ColMaps):
         imageDisplay = img.GetImageDisplay(0)
         if (i< len(VerifiedMaps)):
             colmap = VerifiedMaps[i]
+            imageDisplay.SetColorTableByName(colmap) 
         else:
-            i=0
+            #i=0
+            hue = 1/i
+            GMSHybridCLUT(img, hue)
         if (len(VerifiedMaps)==0):
-            colmap = "Greyscale"
-        imageDisplay.SetColorTableByName(colmap) 
+            #colmap = "Greyscale"
+            #imageDisplay.SetColorTableByName(colmap) 
+            hue = 1-(1/(i+0.01))
+            GMSHybridCLUT(img, hue)
+
         i = i+1
     
 
@@ -142,7 +189,7 @@ def ShowMaps(f):
     #
 
     if bVal == True:
-        nmRC_ColMaps = ["red", "errata", "celery","peach", "eggshell", "canary", "lilac", "seagreen", "teal", "banana"]
+        nmRC_ColMaps = ["errata", "celery","peach", "eggshell", "canary", "lilac", "seagreen", "teal", "banana"]
     #If we want to color the maps in display, need a list of suitable colormaps by name to use
     #Would need to have a list of named suitable colormaps, check if they exist, and put them in a list to use if they do
     #For a GMS installation on a camera system, the color tables are saved in 
@@ -159,7 +206,8 @@ def ShowMaps(f):
             MapVerify(name)
     #
 
-    #or have on the fly get, modify, display colortable in a suitable visibility range
+    #Otherwise using on the fly modification with GMSHybridCLUT
+    
 
     i = 0
     for name in f['1/EDS/Data/Window Integral/'].keys():
@@ -246,17 +294,14 @@ def ProcessH5oina():
         ShowEImage(f)
     except:
         DM.OkDialog( 'No image found' ) 
-
     try:
         ShowMaps(f)
     except:
         DM.OkDialog( 'Maps not found' ) 
-        
-    #try:
-        #ShowLayered(f)
-    #except:
-        #DM.OkDialog( 'Layered image not found' ) 
-    ShowLayered(f)
+    try:
+        ShowLayered(f)
+    except:
+        DM.OkDialog( 'Layered image not found' ) 
     # Now tidy up the current workspace - am assuming we've been swapped to the EDX map workspace by here
     dmWS_Arr_script = 'WorkspaceArrange( 1, 1 )' + '\n'
     # Execute DM script
