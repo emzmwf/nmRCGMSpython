@@ -28,7 +28,8 @@ Turns HRTEM image into an FFT 4D Stack (uses functions from BenMiller at Gatan -
 Imports png file into GMS 
 
 ## Importh5oina
-Script to import data from the Oxford Instruments file format h5oina. This version is written to work with export from AZtec 6.1, so does not include import of spectra files. These would need to be seperately exported as .msa format to be loaded into GMS. 
+Script to import data from the Oxford Instruments file format [h5oina](https://github.com/oinanoanalysis/h5oina)
+This version is written to work with export from AZtec 6.1, so does not include import of spectra files. These would need to be seperately exported as .msa format to be loaded into GMS. 
 Script will read pixel size data and add as calibration. Colourisation option uses look up tables to colourise, uses additional color tables from nmrC_DMScripts/ColorTables/
 
 ## InterpolateOverAnomaly
