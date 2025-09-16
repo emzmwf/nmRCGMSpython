@@ -103,7 +103,15 @@ def ZemImgMove(wsOut, img, Tx, Ty, Sz):
     print(xms+" "+yms)
     
     #get W and H of img 
-    FiddleFactor = 5    # 5 for K3 2kx2k, 10 for OneView
+    FiddleFactor = 10    # 5 for K3 2kx2k, 10 for OneView
+    #Check what camera we are on for fiddle factor. 
+    #Decrease the factor if the images are too close, overlapping
+    # Set for TEM based on camera - for UoN where OneView is on 2100Plus, K3 on 2100F
+    camera = DM.GetActiveCamera()
+    if (camera.GetName() == 'OneView'):
+        FiddleFactor = 8
+    if (camera.GetName() == 'K3'):
+        FiddleFactor = 5
     W = int(img.GetImgWidth())
     H = int(img.GetImgHeight())
     XD = CropVal*int(W/FiddleFactor)*XM+(d*0.4)#Slightly under half to allow for menu and output viewer
@@ -192,6 +200,7 @@ def DoZemlin(BTAmount):
     img.SetName(iname)
     modFFT = DoModFFT(img)  
     modFFT.ShowImage() 
+    # check how to default show as high contrast for recent GMS
     ZemImgMove(wsIDF, modFFT, 0, 0, BTAmount)
     time. sleep(1)
 
@@ -201,14 +210,16 @@ def DoZemlin(BTAmount):
 print("\n========================")
 print("Beam tilts initial state")
 TX,TY = DoBeamTilts()
-BeamTiltAmount = 0.04 #40mrad
+#BeamTiltAmount = 0.04 #40mrad
+BeamTiltAmount = 0.08 #80mrad
 ###
 # This will be adjusting CLA2
 # Calibrated units are given in calibrated units according to the stored calibration - normally with Gatan this is rad (not mrad)
 # suggest values:
 # 80kV Plus @x250K 0.01 (10 mrad)
-#
+# 200kV Plus @ 100k 0.08 (80mrad)
 # 200kV 2100F @50k with 1/2 frame 0.04 (40mrad)
+# 200kV 2100F @150k with 1/2 frame 0.08 (80mrad)
 
 #check if beam is blanked and warn if so
 GetBeamBlanked = DM.Py_Microscope().GetBeamBlanked() 
@@ -221,6 +232,9 @@ try:
 except:
     #Put the tilts back
     DM.Py_Microscope().SetBeamTilt(TX, TY)
+
+print("Beam tilts final state")
+DoBeamTilts()
 
 print("End of script")
 DM.Py_Microscope().SetBeamBlanked(True)  
