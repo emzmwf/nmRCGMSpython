@@ -5,6 +5,7 @@
 # 0.1.4 2025 07 08 - Check for image called SE or BSE, add catches for error, rename workspace based on site name
 # 0.1.5 2025 07 17 - add layered image display as RGB image
 # 0.1.6 2025 07 28 - add on the fly generation of a CLUT if we have run out of the defined list
+# 0.1.7 2025 08 06 - search for layered image update from 1 to 16 rather than hope its in 1
 
 import numpy as np
 
@@ -140,6 +141,9 @@ def parse_map(name, i, f, EDSpx, bVal, VerifiedMaps, nmRC_ColMaps):
         WindowB = ImageDocGetOrCreate.GetWindow()
         x, y = WindowB.GetFrameSize()  
         WindowB.SetFrameSize(x*2, y*2) 
+    # May also benefit from binning the display for visibility? Add option here if so
+    # if using hybrid script, and use the dm command
+    # ChooseMenuItem( "Process", "Re-bin by Two")
     colmap = "Greyscale"
     if bVal == True:
         imageDisplay = img.GetImageDisplay(0)
@@ -218,13 +222,22 @@ def ShowMaps(f):
 def ShowLayered(f):
     #1/Layered Image/EDS Layered Image 1/Data/Color
     #3 column matrix R G B
-    if "1/Layered Image/EDS Layered Image 1/Data/Color" in f:
-        print("Layered EDS image found")
-        lcheck = 1
-        LImage = f['1/Layered Image/EDS Layered Image 1/Data/Color']
+    lcheck = 0
+    lno = 1
+    x = range(16)
+    for i in x:
+        if "1/Layered Image/EDS Layered Image "+str(i)+"/Data/Color" in f:
+            lno = i
+            print("Layered EDS image found in "+str(i))
+            lcheck = 1
+
+    if lcheck == 1:
+        print('showing layered image')
+        LImage = f['1/Layered Image/EDS Layered Image '+str(lno)+'/Data/Color']
+        SX = (f['1/Layered Image/EDS Layered Image '+str(lno)+'/Header/X Cells'][0])
+        SY = (f['1/Layered Image/EDS Layered Image '+str(lno)+'/Header/Y Cells'][0])
+        EDSpx = (f['1/Layered Image/EDS Layered Image '+str(lno)+'/Header/X Step'][0])*1000
         arr_1 = LImage[()]
-        SX = (f['1/Layered Image/EDS Layered Image 1/Header/X Cells'][0])
-        SY = (f['1/Layered Image/EDS Layered Image 1/Header/Y Cells'][0])
         #Get and shape array for each colour
         arr_r = arr_1[:,0].reshape(SX, SX)
         arr_g = arr_1[:,1].reshape(SX, SX)
@@ -240,9 +253,7 @@ def ShowLayered(f):
         #Retitle layered image
         imageL = DM.GetFrontImage()
         imageL.SetName('Layered image') 
-        # Get EDS pixel size in nm
-        
-        EDSpx = (f['1/Layered Image/EDS Layered Image 1/Header/X Step'][0])*1000
+        # Apply calibration
         imageL.SetDimensionCalibration(0, 0, EDSpx, 'nm', 0)     
         imageL.SetDimensionCalibration(1, 0, EDSpx, 'nm', 0)
         
