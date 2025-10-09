@@ -2,38 +2,6 @@
 import numpy as np
 import DigitalMicrograph as DM
 
-# LMx80 positions UoN 2100Plus
-arr = np.array([[-699.525,-53.332],
- [-539.559,349.468],
- [-339.808,809.839],
- [123.356,593.238],
-
- [-55.2453,124.406],
-
- [-271.725,-301.564],
-
- [-517.22,-745.847],
-
- [191.516,-655.31],
-
- [425.842,-173.288],
-
- [640.593,280.861]
- ])
-
-# Array of names if we want to name by relative position
-arrnames = ("-1_-1_",
- "-1_0_",
- "-1_1_",
- "0_1_",
- "0_0_",
- "0_1_",
- "0_2_",
- "1_-1_",
- "1_0_",
- "1_1_")
-# Either measure for each microscope, or add script to access
-# Gatan calibrations to calculate positions
 
 #Capture routine
 def GetImage():
@@ -42,12 +10,38 @@ def GetImage():
     kUnproc = DM.GetCameraUnprocessedEnum()
     cam.AcquireImage( exposure, bin, bin).ShowImage()
 
-'''
-img2 = camera.CreateImageForAcquire( 2, 2 )  
- img2.ShowImage()  
- camera.AcquireInPlace( img2, 0.5, 2, 2, 1, 0, 0, 4096, 4096)  
- img2.UpdateImage()  
-'''
+
+
+# LMx80 positions UoN 2100Plus
+# ideally order these to snakewise raster for efficiency
+arr = np.array([[-699.525,-53.332],
+ [-539.559,349.468],
+ [-339.808,809.839],
+ [123.356,593.238],
+ [-55.2453,124.406],
+ [-271.725,-301.564],
+ [-517.22,-745.847],
+ [191.516,-655.31],
+ [425.842,-173.288],
+ [640.593,280.861]
+ ])
+# Either measure manually and record for each microscope, or add script to access
+# Gatan calibrations to calculate positions
+
+
+# Array of names if we want to name by relative position
+arrnames = ("-1_-1_",
+ "-1_0_",
+ "-1_1_",
+ "0_1_",
+ "0_0_",
+ "0_-1_",
+ "0_-2_",
+ "1_-1_",
+ "1_0_",
+ "1_1_")
+
+
 
 stx = arr[0][0]
 sty = arr[0][1]
@@ -85,7 +79,6 @@ dmScript += 'WorkspaceSetName( wsID_montage , "LMMontage" )' + '\n'
 # Execute DM script
 DM.ExecuteScriptString( dmScript )
 
-
 for i in range(len):
     stx = arr[i][0]
     sty = arr[i][1]
@@ -110,7 +103,10 @@ for i in range(len):
 # blank beam
 DM.Py_Microscope().SetBeamBlanked(True)
 
+# clear up some variables
 del ImageFront
+del arr
+del arrnames
 
 # Auto-arrange window?  3,3,3,1 array?
 # reset stage position?
