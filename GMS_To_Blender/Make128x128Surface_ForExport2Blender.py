@@ -41,7 +41,7 @@ def GetCrop():
     sqdim = min(imshape)
     newimg = dmImgData[0:sqdim,0:sqdim]
     outsize = 128
-    print("\n binfactor "+str(outsize))
+    print("\n binning to  "+str(outsize))
     binimg = rebin(newimg, (outsize,outsize))
     return binimg
     
