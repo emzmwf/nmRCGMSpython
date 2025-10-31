@@ -2,6 +2,7 @@
 
 '''
 Extract and print tags from front image
+Tested with GMS 3.62
 '''
 import DigitalMicrograph as DM
 
@@ -41,4 +42,5 @@ for x in TagList:
         print( tagPath, val, sep="\t" )
     else:
         print( 'The tag [',tagPath,'] was not found or not of valid type.', sep="" )
+
 
