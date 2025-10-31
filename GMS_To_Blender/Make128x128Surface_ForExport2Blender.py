@@ -64,5 +64,3 @@ def makesurface(z):
    
 
 makesurface(GetCrop())
-
-#To do - add default directory save location checking instead of hard coded
