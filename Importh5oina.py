@@ -6,6 +6,9 @@
 # 0.1.5 2025 07 17 - add layered image display as RGB image
 # 0.1.6 2025 07 28 - add on the fly generation of a CLUT if we have run out of the defined list
 # 0.1.7 2025 08 06 - search for layered image update from 1 to 16 rather than hope its in 1
+# 0.1.8 2026 02 23 - the Greek alpha symbol gets distorted - h5py is loading in the wrong encoding? Should be utf-8 instead
+#                   convert to ASCII and ignore errors. 
+# 0.1.9 2026 03 26 - use Map name as well as site name for workspace name
 
 import numpy as np
 
@@ -48,6 +51,11 @@ def GMSHybridCLUT(img, hue):
     del imgCLUT
     print("Hue is "+str(hue))  
 
+# Greek names in strings - convert to ASCII
+def FixGreek(name):
+    new_name = name
+    new_name = name.encode('ascii',errors='ignore').decode()
+    return new_name
 
 def ShowEImage(f):
     #This checks to see if the Electron Image / Data / SE dataset exists in the first site
@@ -131,7 +139,7 @@ def parse_map(name, i, f, EDSpx, bVal, VerifiedMaps, nmRC_ColMaps):
     arr = Map[()] 
     arr_2d = arr.reshape(SX, SY)
     img = DM.CreateImage(arr_2d.copy())
-    img.SetName(name)
+    img.SetName(FixGreek(name))
     img.ShowImage()
     img.SetDimensionCalibration(0, 0, EDSpx, 'nm', 0)     
     img.SetDimensionCalibration(1, 0, EDSpx, 'nm', 0)  
@@ -287,6 +295,7 @@ def ProcessH5oina():
     f.visit(print) 
     
     SiteName = (str(f['1/Electron Image/Header/Site Label'][0].decode('ASCII')))
+    MapName = (str(f['1/Electron Image/Header/Analysis Label'][0].decode('ASCII') ))
 
     #id = listener.WorkspaceHandleWorkspaceCreated('EDX Map') 
 
@@ -294,8 +303,7 @@ def ProcessH5oina():
     dmWScript = 'number wsID_src = WorkSpaceGetActive()' + '\n'
     dmWScript += 'number wsID_montage = WorkSpaceAdd( WorkSpaceGetIndex(wsID_src) + 1 )' + '\n'
     dmWScript += 'WorkSpaceSetActive( wsID_montage )' + '\n'
-    #dmWScript += 'WorkspaceSetName( wsID_montage , "EDX Map" )' + '\n'
-    dmWScript += 'WorkspaceSetName( wsID_montage , "' + SiteName+'" )' + '\n'
+    dmWScript += 'WorkspaceSetName( wsID_montage , "' + SiteName + MapName+'" )' + '\n'
     # Execute DM script
     DM.ExecuteScriptString( dmWScript )
     
