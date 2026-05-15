@@ -1,9 +1,13 @@
+# Script to be run within GMS
+# Create three files to be merged with GMS ColorMix
+# merged file is colormap to be saved as .dm3 to ColorTables folder 
+
 import matplotlib.pyplot as plt 
 import DigitalMicrograph as DM
 import numpy as np
 
 style_list = ['default', 'classic'] + sorted(style for style in plt.style.available if style != 'classic')
-print("\n")
+print("\n Available styles are: ")
 print(style_list)
 
 #cmapname = 'twilight'
@@ -16,16 +20,19 @@ print(style_list)
 cmapname = 'PiYG'
 cmap = plt.get_cmap(cmapname)
 
+#would be useful to check details of colormap to pick suitable stop value
+
 arr = np.arange(start=0, stop=256, step=1)
 
-# 0 to 512 for twilight
-#arr = np.arange(start=0, stop=512, step=2)
+if (cmapname = 'twilight'):
+  arr = np.arange(start=0, stop=512, step=2)
 
 
 Barr = np.reshape(arr, (16, 16))
 
 rgba_img = cmap(Barr)
-#DM Python does not support RGB image creation yet
+
+#DM Python does not support RGB image creation yet, so create three images to be merged with the GMS ColorMix function
 
 print(np.shape(rgba_img))
 
@@ -55,4 +62,7 @@ del r
 del g
 del b
 
+# Combine the RGB with ColorMix
+# Save as a .dm3 - NOT .dm4 - to the user director GMS will look for, e.g. C:\Users\VALUEDGATANCUSTOMER\Documents\GMS_Scripts\Processing_and_analysis\ColorTables
+# Colormap will be available to apply after restarting GMS
 
