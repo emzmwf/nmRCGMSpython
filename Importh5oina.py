@@ -7,8 +7,9 @@
 # 0.1.6 2025 07 28 - add on the fly generation of a CLUT if we have run out of the defined list
 # 0.1.7 2025 08 06 - search for layered image update from 1 to 16 rather than hope its in 1
 # 0.1.8 2026 02 23 - the Greek alpha symbol gets distorted - h5py is loading in the wrong encoding? Should be utf-8 instead
-#                   convert to ASCII and ignore errors. 
-# 0.1.9 2026 03 26 - use Map name as well as site name for workspace name
+#                   placeholder def in place for fix if we can ever work out how to do this without crashing
+# 0.1.10 2026 08 18- Load in Tru Map or Quant Map data also
+
 
 import numpy as np
 
@@ -51,7 +52,7 @@ def GMSHybridCLUT(img, hue):
     del imgCLUT
     print("Hue is "+str(hue))  
 
-# Greek names in strings - convert to ASCII
+# Fix for Greek names in strings
 def FixGreek(name):
     new_name = name
     new_name = name.encode('ascii',errors='ignore').decode()
@@ -130,7 +131,7 @@ def ShowEImage(f):
 
 #So from the keys, we can parse over the maps
 #Set up a def to do this
-def parse_map(name, i, f, EDSpx, bVal, VerifiedMaps, nmRC_ColMaps):
+def parse_map(name, i, f, EDSpx, bVal, gVal, VerifiedMaps, nmRC_ColMaps):
     print(name)
     Map = (f['1/EDS/Data/Window Integral/'+name]) 
     SZ = Map.shape[0]
@@ -138,8 +139,104 @@ def parse_map(name, i, f, EDSpx, bVal, VerifiedMaps, nmRC_ColMaps):
     SX = (f['1/EDS/Header/Y Cells'][0])
     arr = Map[()] 
     arr_2d = arr.reshape(SX, SY)
+    # gVal - option for Gaussian filter
+    # May alternatively benefit from binning the display for visibility? Add option here if so
+    # if using hybrid script, and use the dm command
+    # ChooseMenuItem( "Process", "Re-bin by Two")
+    if gVal == False:
+        from scipy.ndimage import gaussian_filter
+        arr_2d = gaussian_filter(arr_2d, 5)
+        
     img = DM.CreateImage(arr_2d.copy())
     img.SetName(FixGreek(name))
+    img.ShowImage()
+    img.SetDimensionCalibration(0, 0, EDSpx, 'nm', 0)     
+    img.SetDimensionCalibration(1, 0, EDSpx, 'nm', 0)  
+    #Size the maps so they will display better on a typical GMS window if they are 256 or less
+    if SX <=256:
+        ImageDocGetOrCreate = img.GetOrCreateImageDocument()  
+        WindowB = ImageDocGetOrCreate.GetWindow()
+        x, y = WindowB.GetFrameSize()  
+        WindowB.SetFrameSize(x*2, y*2) 
+
+
+    colmap = "Greyscale"
+    if bVal == True:
+        imageDisplay = img.GetImageDisplay(0)
+        if (i< len(VerifiedMaps)):
+            colmap = VerifiedMaps[i]
+            imageDisplay.SetColorTableByName(colmap) 
+        else:
+            #i=0
+            hue = 1/i
+            GMSHybridCLUT(img, hue)
+        if (len(VerifiedMaps)==0):
+            #colmap = "Greyscale"
+            #imageDisplay.SetColorTableByName(colmap) 
+            hue = 1-(1/(i+0.01))
+            GMSHybridCLUT(img, hue)
+
+        i = i+1
+####
+
+def parse_Trumap(name, i, f, EDSpx, bVal, gVal, VerifiedMaps, nmRC_ColMaps):
+    print(name)
+    Map = (f['1/EDS/Data/Peak Area/'+name]) 
+    SZ = Map.shape[0]
+    SY = (f['1/EDS/Header/X Cells'][0])
+    SX = (f['1/EDS/Header/Y Cells'][0])
+    arr = Map[()] 
+    arr_2d = arr.reshape(SX, SY)
+    # gVal - option for Gaussian filter
+    # May alternatively benefit from binning the display for visibility? Add option here if so
+    # if using hybrid script, and use the dm command
+    # ChooseMenuItem( "Process", "Re-bin by Two")
+    if gVal == False:
+        from scipy.ndimage import gaussian_filter
+        arr_2d = gaussian_filter(arr_2d, 5)
+        
+    img = DM.CreateImage(arr_2d.copy())
+    img.SetName(FixGreek(name))
+    img.ShowImage()
+    img.SetDimensionCalibration(0, 0, EDSpx, 'nm', 0)     
+    img.SetDimensionCalibration(1, 0, EDSpx, 'nm', 0)  
+    #Size the maps so they will display better on a typical GMS window if they are 256 or less
+    if SX <=256:
+        ImageDocGetOrCreate = img.GetOrCreateImageDocument()  
+        WindowB = ImageDocGetOrCreate.GetWindow()
+        x, y = WindowB.GetFrameSize()  
+        WindowB.SetFrameSize(x*2, y*2) 
+
+
+    colmap = "Greyscale"
+    if bVal == True:
+        imageDisplay = img.GetImageDisplay(0)
+        if (i< len(VerifiedMaps)):
+            colmap = VerifiedMaps[i]
+            imageDisplay.SetColorTableByName(colmap) 
+        else:
+            #i=0
+            hue = 1/i
+            GMSHybridCLUT(img, hue)
+        if (len(VerifiedMaps)==0):
+            #colmap = "Greyscale"
+            #imageDisplay.SetColorTableByName(colmap) 
+            hue = 1-(1/(i+0.01))
+            GMSHybridCLUT(img, hue)
+
+        i = i+1
+####
+
+def parse_quantmap(name, i, f, EDSpx, bVal, VerifiedMaps, nmRC_ColMaps):
+    print(name)
+    Map = (f['1/EDS/Data/Composition/'+name]) 
+    SZ = Map.shape[0]
+    SY = (f['1/EDS/Header/X Cells'][0])
+    SX = (f['1/EDS/Header/Y Cells'][0])
+    arr = Map[()] 
+    arr_2d = arr.reshape(SX, SY)
+    img = DM.CreateImage(arr_2d.copy())
+    img.SetName(name)
     img.ShowImage()
     img.SetDimensionCalibration(0, 0, EDSpx, 'nm', 0)     
     img.SetDimensionCalibration(1, 0, EDSpx, 'nm', 0)  
@@ -170,20 +267,115 @@ def parse_map(name, i, f, EDSpx, bVal, VerifiedMaps, nmRC_ColMaps):
 
         i = i+1
     
+####
 
-
-def ShowMaps(f):
-    ###
-    #now for the maps
-    #So how many maps in total then
-    try:
-        print(f['1/EDS/Data/Window Integral/'])
-    except:
-        DM.OkDialog( 'No maps found' ) 
-
+def GetMaps(f):
+    DM.OkDialog( 'Loading Maps' )
     mapnames = (f['1/EDS/Data/Window Integral/'].keys())
     print(mapnames)
 
+    # Get EDS pixel size in nm
+    EDSpx = (f['1/EDS/Header/X Step'][0])*1000
+
+    bVal = 0
+    bVal = DM.OkCancelDialog( 'OK to colour, cancel for greyscale' )
+    gVal = 0
+    gVal = DM.OkCancelDialog( 'OK to display unfiltered, cancel for Gaussian filtered')
+
+    import os
+    def MapVerify(name):
+        path = os.getenv('LOCALAPPDATA')
+        CTpath = path+"\Gatan\ColorTables"
+        CTname = (CTpath+"\\"+name+".dm3")
+        print(CTname)
+        if (os.path.isfile(CTname)):
+            VerifiedMaps.append(name)
+    #
+
+    if bVal == True:
+        nmRC_ColMaps = ["errata", "celery","peach", "eggshell", "canary", "lilac", "seagreen", "teal", "banana"]
+    #If we want to color the maps in display, need a list of suitable colormaps by name to use
+    #Would need to have a list of named suitable colormaps, check if they exist, and put them in a list to use if they do
+    #For a GMS installation on a camera system, the color tables are saved in 
+    # C:\Users\VALUEDGATANCUSTOMER\AppData\Local\Gatan\ColorTables
+    # Get current AppData\Local with 
+    #import os
+    #path = os.getenv('LOCALAPPDATA')
+    #CTpath = path+"\Gatan\ColorTables"
+    # so now check for each filename in the list
+    # os.path.isfile(CTpath+"\lilac.dm3"))
+
+        VerifiedMaps = []
+        for name in nmRC_ColMaps:
+            MapVerify(name)
+    #
+
+    #Otherwise suggest using on the fly modification with GMSHybridCLUT
+
+    i = 0
+    for name in f['1/EDS/Data/Window Integral/'].keys():
+        parse_map(name, i, f, EDSpx, bVal, gVal, VerifiedMaps, nmRC_ColMaps)
+        i = i+1
+###
+
+def GetTruMaps(f):
+    DM.OkDialog( 'Loading TruMaps' )
+    mapnames = (f['1/EDS/Data/Peak Area/'].keys())
+    print(mapnames)
+
+    # Get EDS pixel size in nm
+    EDSpx = (f['1/EDS/Header/X Step'][0])*1000
+
+    bVal = 0
+    bVal = DM.OkCancelDialog( 'OK to colour, cancel for greyscale' )
+    gVal = 0
+    gVal = DM.OkCancelDialog( 'OK to display unfiltered, cancel for Gaussian filtered')
+
+    import os
+    def MapVerify(name):
+        path = os.getenv('LOCALAPPDATA')
+        CTpath = path+"\Gatan\ColorTables"
+        CTname = (CTpath+"\\"+name+".dm3")
+        print(CTname)
+        if (os.path.isfile(CTname)):
+            VerifiedMaps.append(name)
+    #
+
+    if bVal == True:
+        nmRC_ColMaps = ["errata", "celery","peach", "eggshell", "canary", "lilac", "seagreen", "teal", "banana"]
+    #If we want to color the maps in display, need a list of suitable colormaps by name to use
+    #Would need to have a list of named suitable colormaps, check if they exist, and put them in a list to use if they do
+    #For a GMS installation on a camera system, the color tables are saved in 
+    # C:\Users\VALUEDGATANCUSTOMER\AppData\Local\Gatan\ColorTables
+    # Get current AppData\Local with 
+    #import os
+    #path = os.getenv('LOCALAPPDATA')
+    #CTpath = path+"\Gatan\ColorTables"
+    # so now check for each filename in the list
+    # os.path.isfile(CTpath+"\lilac.dm3"))
+
+        VerifiedMaps = []
+        for name in nmRC_ColMaps:
+            MapVerify(name)
+    #
+
+    #Otherwise suggest using on the fly modification with GMSHybridCLUT
+    
+    print("Ready to parse TruMaps")
+    print(f['1/EDS/Data/Peak Area/'].keys())
+    i = 0
+    for name in f['1/EDS/Data/Peak Area/'].keys():
+        print(name)
+        parse_Trumap(name, i, f, EDSpx, bVal, gVal, VerifiedMaps, nmRC_ColMaps)
+        print(i)
+        i = i+1
+        
+###
+
+def GetQuantMaps(f):
+    DM.OkDialog( 'Loading Quant Maps' )
+    mapnames = (f['1/EDS/Data/Composition'].keys())
+    print(mapnames)
     # Get EDS pixel size in nm
     EDSpx = (f['1/EDS/Header/X Step'][0])*1000
 
@@ -222,9 +414,24 @@ def ShowMaps(f):
     
 
     i = 0
-    for name in f['1/EDS/Data/Window Integral/'].keys():
-        parse_map(name, i, f, EDSpx, bVal, VerifiedMaps, nmRC_ColMaps)
+    for name in (f['1/EDS/Data/Composition'].keys()):
+        parse_quantmap(name, i, f, EDSpx, bVal, VerifiedMaps, nmRC_ColMaps)
         i = i+1
+###    
+
+def ShowMaps(f):
+    if "Composition" in (f['1/EDS/Data/']):
+        GetQuantMaps(f)
+    if "Window Integral" in (f['1/EDS/Data/']):
+        if "Peak Area" in (f['1/EDS/Data/']):
+            bVal = DM.OkCancelDialog( 'OK for Tru Map, cancel for Map' )
+            if bVal == True:
+                GetTruMaps(f)
+            else:
+                GetMaps(f)
+        else:
+            GetMaps(f)
+
 
 # Layered Image
 def ShowLayered(f):
@@ -232,7 +439,7 @@ def ShowLayered(f):
     #3 column matrix R G B
     lcheck = 0
     lno = 1
-    x = range(16)
+    x = range(32)
     for i in x:
         if "1/Layered Image/EDS Layered Image "+str(i)+"/Data/Color" in f:
             lno = i
@@ -297,13 +504,24 @@ def ProcessH5oina():
     SiteName = (str(f['1/Electron Image/Header/Site Label'][0].decode('ASCII')))
     MapName = (str(f['1/Electron Image/Header/Analysis Label'][0].decode('ASCII') ))
 
+    #Map, TruMap or QuantMap?
+    #Find if EDS/Data/ has 'Peak Area' or 'Composition' beneath it
+    MTQ = ""
+    if "Peak Area" in (f['1/EDS/Data/']):
+        DM.OkDialog( 'TruMaps found' )
+        MTQ = "Tru"
+    if "Composition" in (f['1/EDS/Data/']):
+        DM.OkDialog( 'Quant Maps found' )
+        MTQ = "Quant"
+
     #id = listener.WorkspaceHandleWorkspaceCreated('EDX Map') 
 
     # DM create workspace for display
     dmWScript = 'number wsID_src = WorkSpaceGetActive()' + '\n'
     dmWScript += 'number wsID_montage = WorkSpaceAdd( WorkSpaceGetIndex(wsID_src) + 1 )' + '\n'
     dmWScript += 'WorkSpaceSetActive( wsID_montage )' + '\n'
-    dmWScript += 'WorkspaceSetName( wsID_montage , "' + SiteName + MapName+'" )' + '\n'
+    #dmWScript += 'WorkspaceSetName( wsID_montage , "EDX Map" )' + '\n'
+    dmWScript += 'WorkspaceSetName( wsID_montage , "' + SiteName + MTQ+MapName+'" )' + '\n'
     # Execute DM script
     DM.ExecuteScriptString( dmWScript )
     
