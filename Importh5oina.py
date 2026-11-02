@@ -9,7 +9,7 @@
 # 0.1.8 2026 02 23 - the Greek alpha symbol gets distorted - h5py is loading in the wrong encoding? Should be utf-8 instead
 #                   placeholder def in place for fix if we can ever work out how to do this without crashing
 # 0.1.10 2026 08 18- Load in Tru Map or Quant Map data also
-# 0.1.11 2026 10 29- Add try/except corrections that allow loading in of h5oina files from SEM-EDS Aztec 6.1 
+# 0.1.11 2026 10 29- Testing loading in of SEM-EDS 6.1 files
 
 import numpy as np
 
@@ -478,6 +478,12 @@ def ShowMaps(f):
                 GetMaps(f)
         else:
             GetMaps(f)
+    else:
+        print("Composition not found")
+        if "Peak Area" in (f['1/EDS/Data/']):
+            print("Trying maps")
+            
+        
 
 
 # Layered Image
@@ -589,7 +595,7 @@ def ProcessH5oina():
     except:
         DM.OkDialog( 'No image found' ) 
     try:
-         ShowMaps(f)
+        ShowMaps(f)
     except:
         DM.OkDialog( 'Maps not found' ) 
     try:
