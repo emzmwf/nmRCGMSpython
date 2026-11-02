@@ -589,7 +589,7 @@ def ProcessH5oina():
     except:
         DM.OkDialog( 'No image found' ) 
     try:
-        GetTruMaps(f)
+         ShowMaps(f)
     except:
         DM.OkDialog( 'Maps not found' ) 
     try:
