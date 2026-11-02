@@ -481,8 +481,11 @@ def ShowMaps(f):
     else:
         print("Composition not found")
         if "Peak Area" in (f['1/EDS/Data/']):
+            print("Trying Trumaps")
+            GetTruMaps(f)
+        else:
             print("Trying maps")
-            
+            GetMaps(f)
         
 
 
