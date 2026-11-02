@@ -9,7 +9,7 @@
 # 0.1.8 2026 02 23 - the Greek alpha symbol gets distorted - h5py is loading in the wrong encoding? Should be utf-8 instead
 #                   placeholder def in place for fix if we can ever work out how to do this without crashing
 # 0.1.10 2026 08 18- Load in Tru Map or Quant Map data also
-
+# 0.1.11 2026 10 29- Add try/except corrections that allow loading in of h5oina files from SEM-EDS Aztec 6.1 
 
 import numpy as np
 
@@ -61,6 +61,8 @@ def FixGreek(name):
 def ShowEImage(f):
     #This checks to see if the Electron Image / Data / SE dataset exists in the first site
     #set variable echeck to 0 until we find the dataset
+    #DM.OkDialog( 'Image Checkpoint One' )
+    
     echeck = 0
 
     if "1/Electron Image/Data/SE/" in f:
@@ -85,6 +87,10 @@ def ShowEImage(f):
         ImageName = (list(f['1/Electron Image/Data/BSE'].keys())[0])
 
     ImageName
+    specname = str(f['1/Electron Image/Header/Specimen Label'][0].decode('ASCII') )+" "
+    #print(specname)
+    #DM.OkDialog( 'Image Checkpoint Two' +str(specname) )
+    
 
     #EImage = f['1/Electron Image/Data/SE/Electron Image 2 (Input 1)']
     if (echeck == 1):
@@ -103,7 +109,7 @@ def ShowEImage(f):
     print(IBB[0])
     print(IBB[1])
 
-    arr_2d = arr_1.reshape(SX, SX)
+    arr_2d = arr_1.reshape(SY, SX)# Note the order
     print( 'Shape of Numpy array:',arr_2d.shape )
     
     # Pixel size of the electron image in microns
@@ -111,13 +117,13 @@ def ShowEImage(f):
     EIpx = (f['1/Electron Image/Header/X Step'][0])   
 
     img = DM.CreateImage(arr_2d.copy())
-    img.SetName(ImageName)
+    img.SetName(str(specname)+str(ImageName))
     img.ShowImage()
 
     img.SetDimensionCalibration(0, 0, EIpx*1000, 'nm', 0)     
     img.SetDimensionCalibration(1, 0, EIpx*1000, 'nm', 0)  
     img_disp = img.GetImageDisplay(0)
-    img_disp.AddNewComponent(31, SX*0.8, SX*0.1, SX*0.9, SX*0.9 )# scale bar from top, left, 
+    img_disp.AddNewComponent(31, SY*0.8, SX*0.1, SY*0.9, SX*0.9 )# scale bar from top, left, 
     #Get the image tags
     imgTG = img.GetTagGroup()
     imgTG.SetTagAsString( 'Analysis Label',str(f['1/Electron Image/Header/Analysis Label'][0].decode('ASCII') ))
@@ -180,13 +186,20 @@ def parse_map(name, i, f, EDSpx, bVal, gVal, VerifiedMaps, nmRC_ColMaps):
 ####
 
 def parse_Trumap(name, i, f, EDSpx, bVal, gVal, VerifiedMaps, nmRC_ColMaps):
+    #DM.OkDialog( 'ParseTru starting' )
     print(name)
-    Map = (f['1/EDS/Data/Peak Area/'+name]) 
+    try:
+        Map = (f['1/EDS/Data/Peak Area/'+name]) 
+    except:
+        Map = (f['1/EDS/Data/Window Integral/'+name]) 
     SZ = Map.shape[0]
+    #DM.OkDialog( 'ParseTru Checkpoint One' )
     SY = (f['1/EDS/Header/X Cells'][0])
     SX = (f['1/EDS/Header/Y Cells'][0])
     arr = Map[()] 
+    #DM.OkDialog( 'ParseTru Checkpoint Two' )
     arr_2d = arr.reshape(SX, SY)
+    #DM.OkDialog( 'ParseTru Checkpoint Three' )
     # gVal - option for Gaussian filter
     # May alternatively benefit from binning the display for visibility? Add option here if so
     # if using hybrid script, and use the dm command
@@ -209,6 +222,8 @@ def parse_Trumap(name, i, f, EDSpx, bVal, gVal, VerifiedMaps, nmRC_ColMaps):
 
 
     colmap = "Greyscale"
+    #DM.OkDialog( 'bVal is '+str(bVal) )
+    
     if bVal == True:
         imageDisplay = img.GetImageDisplay(0)
         if (i< len(VerifiedMaps)):
@@ -216,14 +231,15 @@ def parse_Trumap(name, i, f, EDSpx, bVal, gVal, VerifiedMaps, nmRC_ColMaps):
             imageDisplay.SetColorTableByName(colmap) 
         else:
             #i=0
-            hue = 1/i
+            hue = 1/(i-len(VerifiedMaps))
             GMSHybridCLUT(img, hue)
         if (len(VerifiedMaps)==0):
             #colmap = "Greyscale"
             #imageDisplay.SetColorTableByName(colmap) 
             hue = 1-(1/(i+0.01))
             GMSHybridCLUT(img, hue)
-
+    else:
+        print("Staying grey")
         i = i+1
 ####
 
@@ -234,7 +250,8 @@ def parse_quantmap(name, i, f, EDSpx, bVal, VerifiedMaps, nmRC_ColMaps):
     SY = (f['1/EDS/Header/X Cells'][0])
     SX = (f['1/EDS/Header/Y Cells'][0])
     arr = Map[()] 
-    arr_2d = arr.reshape(SX, SY)
+    #arr_2d = arr.reshape(SX, SY)
+    arr_2d = arr.reshape(SY, SX)
     img = DM.CreateImage(arr_2d.copy())
     img.SetName(name)
     img.ShowImage()
@@ -290,10 +307,10 @@ def GetMaps(f):
         print(CTname)
         if (os.path.isfile(CTname)):
             VerifiedMaps.append(name)
-    #
+    
 
     if bVal == True:
-        nmRC_ColMaps = ["errata", "celery","peach", "eggshell", "canary", "lilac", "seagreen", "teal", "banana"]
+        nmRC_ColMaps = ["errata", "celery","peach", "eggshell", "canary", "lilac", "seagreen", "teal", "banana", "turqoise"]
     #If we want to color the maps in display, need a list of suitable colormaps by name to use
     #Would need to have a list of named suitable colormaps, check if they exist, and put them in a list to use if they do
     #For a GMS installation on a camera system, the color tables are saved in 
@@ -309,8 +326,11 @@ def GetMaps(f):
         for name in nmRC_ColMaps:
             MapVerify(name)
     #
-
+    else:
+        nmRC_ColMaps = ["Greyscale"]
     #Otherwise suggest using on the fly modification with GMSHybridCLUT
+
+    
 
     i = 0
     for name in f['1/EDS/Data/Window Integral/'].keys():
@@ -320,17 +340,27 @@ def GetMaps(f):
 
 def GetTruMaps(f):
     DM.OkDialog( 'Loading TruMaps' )
-    mapnames = (f['1/EDS/Data/Peak Area/'].keys())
-    print(mapnames)
+    #DM.OkDialog( 'Checkpoint One' )
+    try:
+        mapnames = (f['1/EDS/Data/Peak Area/'].keys())
+        print(mapnames)
+    except:
+        print("Mapnames not found under EDS/Data/Peak Area")
+        print("Trying Data/ Window Itegral")
+        for name in f['1/EDS/Data/Window Integral/'].keys():
+            print(name)
+        mapnames = (f['1/EDS/Data/Window Integral/'].keys())
+        print(mapnames)
 
+    #DM.OkDialog( 'Checkpoint Two' )
     # Get EDS pixel size in nm
     EDSpx = (f['1/EDS/Header/X Step'][0])*1000
-
+    #DM.OkDialog( 'Checkpoint Three' )
     bVal = 0
     bVal = DM.OkCancelDialog( 'OK to colour, cancel for greyscale' )
     gVal = 0
     gVal = DM.OkCancelDialog( 'OK to display unfiltered, cancel for Gaussian filtered')
-
+    #DM.OkDialog( 'Checkpoint Four' )
     import os
     def MapVerify(name):
         path = os.getenv('LOCALAPPDATA')
@@ -357,19 +387,34 @@ def GetTruMaps(f):
         VerifiedMaps = []
         for name in nmRC_ColMaps:
             MapVerify(name)
-    #
+    else:
+        print("Selecting Greyscale")
+        nmRC_ColMaps = ["Greyscale"]
+        VerifiedMaps = []
+        for name in nmRC_ColMaps:
+            MapVerify(name)
 
+    #DM.OkDialog( 'Checkpoint Five' )
+
+    
     #Otherwise suggest using on the fly modification with GMSHybridCLUT
     
     print("Ready to parse TruMaps")
-    print(f['1/EDS/Data/Peak Area/'].keys())
+    #print(f['1/EDS/Data/Peak Area/'].keys())
+    print(mapnames)
     i = 0
-    for name in f['1/EDS/Data/Peak Area/'].keys():
+    #for name in f['1/EDS/Data/Peak Area/'].keys():
+    #DM.OkDialog( 'Checkpoint Six' )
+    for name in mapnames:
         print(name)
-        parse_Trumap(name, i, f, EDSpx, bVal, gVal, VerifiedMaps, nmRC_ColMaps)
+        try:
+            parse_Trumap(name, i, f, EDSpx, bVal, gVal, VerifiedMaps, nmRC_ColMaps)
+        except:
+            print("Failed to parse Trumap")
         print(i)
         i = i+1
-        
+    
+    #DM.OkDialog( 'Checkpoint End of GetTruMaps' )    
 ###
 
 def GetQuantMaps(f):
@@ -426,8 +471,10 @@ def ShowMaps(f):
         if "Peak Area" in (f['1/EDS/Data/']):
             bVal = DM.OkCancelDialog( 'OK for Tru Map, cancel for Map' )
             if bVal == True:
+                DM.OkDialog( 'Peak Area found, loading TruMaps' )
                 GetTruMaps(f)
             else:
+                DM.OkDialog( 'Peak Area not found, loading Maps' )
                 GetMaps(f)
         else:
             GetMaps(f)
@@ -435,6 +482,7 @@ def ShowMaps(f):
 
 # Layered Image
 def ShowLayered(f):
+    #DM.OkDialog( 'Running ShowLayered' )
     #1/Layered Image/EDS Layered Image 1/Data/Color
     #3 column matrix R G B
     lcheck = 0
@@ -446,17 +494,25 @@ def ShowLayered(f):
             print("Layered EDS image found in "+str(i))
             lcheck = 1
 
+    DM.OkDialog( 'Found Layered Image data at '+str(lno) )
+
     if lcheck == 1:
         print('showing layered image')
+        #DM.OkDialog( 'Parsing layered image data' )
         LImage = f['1/Layered Image/EDS Layered Image '+str(lno)+'/Data/Color']
         SX = (f['1/Layered Image/EDS Layered Image '+str(lno)+'/Header/X Cells'][0])
         SY = (f['1/Layered Image/EDS Layered Image '+str(lno)+'/Header/Y Cells'][0])
         EDSpx = (f['1/Layered Image/EDS Layered Image '+str(lno)+'/Header/X Step'][0])*1000
+        #print("SX: "+str(SX))
+        #print("SYX: "+str(SY))
+        
         arr_1 = LImage[()]
+        #print(arr_1)
+        #print(np.shape(arr_1))
         #Get and shape array for each colour
-        arr_r = arr_1[:,0].reshape(SX, SX)
-        arr_g = arr_1[:,1].reshape(SX, SX)
-        arr_b = arr_1[:,2].reshape(SX, SX)
+        arr_r = arr_1[:,0].reshape(SY, SX)#note the order
+        arr_g = arr_1[:,1].reshape(SY, SX)
+        arr_b = arr_1[:,2].reshape(SY, SX)
         
         # Create DM images for each color
         r_ = DM.CreateImage(arr_r.copy())
@@ -476,6 +532,7 @@ def ShowLayered(f):
         print("Layered image not found in expected place")
 
 # Script main body
+
 
 def ProcessH5oina():
     import h5py
@@ -532,7 +589,7 @@ def ProcessH5oina():
     except:
         DM.OkDialog( 'No image found' ) 
     try:
-        ShowMaps(f)
+        GetTruMaps(f)
     except:
         DM.OkDialog( 'Maps not found' ) 
     try:
